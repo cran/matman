@@ -7,7 +7,7 @@
 expandData(
   data,
   expand,
-  expandTo = c("all", "included"),
+  expandTo = c("all", "event"),
   valueColumns,
   latest_values = F,
   valueLevels = NA,

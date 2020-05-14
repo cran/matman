@@ -12,6 +12,8 @@ This S4 class represents the result of a comparison of two ABC/XYZ analysis resu
 \describe{
 \item{\code{data}}{(data.frame) The comparison result as data.frame.}
 
+\item{\code{type}}{(character) The type of the analysis that has been performed. This is either 'abc' or 'abcxyz'.}
+
 \item{\code{valueDiff}}{(numeric) The difference between the value of an item in ABC/XYZ analysis A and the value of the same item
 in ABC/XYZ analysis B that is required to consider the item in the comparison.}
 

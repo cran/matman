@@ -44,6 +44,7 @@ setClass(
 #' \code{compare} function. This S4 class represents the result of a comparison of two
 #' ABC/XYZ analysis results.
 #' @slot data (data.frame) The comparison result as data.frame.
+#' @slot type (character) The type of the analysis that has been performed. This is either 'abc' or 'abcxyz'.
 #' @slot valueDiff (numeric) The difference between the value of an item in ABC/XYZ analysis A and the value of the same item
 #' in ABC/XYZ analysis B that is required to consider the item in the comparison.
 #' @slot xyzCoefficientDiff (numeric) The difference between the xyz coefficient of an item in ABC/XYZ analysis A and the
@@ -69,6 +70,7 @@ setClass(
   "ABCXYZComparison",
   representation(
     data = "data.frame",
+    type = "character",
     valueDiff = "numeric",
     xyzCoefficientDiff = "numeric",
     unequalABC = "logical",
@@ -94,8 +96,7 @@ setClass(
   aggregatedData$abc[aggregatedData$cumulative.percentage <= AB] = "A"
   aggregatedData$abc[aggregatedData$cumulative.percentage > AB &
                        aggregatedData$cumulative.percentage <= BC] = "B"
-  aggregatedData$abc[aggregatedData$cumulative.percentage > BC &
-                       aggregatedData$cumulative.percentage <= 100] = "C"
+  aggregatedData$abc[aggregatedData$cumulative.percentage > BC] = "C"
 
   return(aggregatedData)
 
@@ -140,7 +141,7 @@ setClass(
     nonZeros = aggregatedData[[value]] != 0
     aggregatedData = aggregatedData[nonZeros,]
 
-    xyzData = as.data.table(aggregatedData)[,list(xyz.coefficient = .sd.g(get(value))), keyby = item]
+    xyzData = as.data.table(aggregatedData)[,list(xyz.coefficient = .sd.g(get(..value))), keyby = eval(get("item"))]
   } else {
     # Time periods (days, weeks, months, quarters, years) with no values are considered.
     # First the number of all time periods e. g. days between the min and max date are computed.
@@ -184,7 +185,7 @@ setClass(
     }
 
     # Third the XYZ-Coefficient is calculated. For all missing time periods the value 0 is considered.
-    xyzData = as.data.table(aggregatedData)[,list(xyz.coefficient = .sd.g(value, timePeriods = numberTimePeriods)), keyby = item]
+    xyzData = as.data.table(aggregatedData)[,list(xyz.coefficient = .sd.g(get(..value), timePeriods = numberTimePeriods)), keyby = eval(get("item"))]
   }
 
   # Assignment of the classes X, Y, Z.
@@ -483,12 +484,20 @@ setMethod("compare", signature = c("ABCXYZData", "ABCXYZData"), function(object1
                                             unequalXYZ = NA) {
   abcData1 = object1@data
   abcData2 = object2@data
-  # if (nrow(abcData1) != nrow(abcData2)) {
-  #   stop("The ABCXYZData are not comparable.")
-  # }
+
+  if (object1@type != object2@type) {
+    stop("The ABCXYZData are not comparable because they are of different types.")
+  }
+
+  if (object1@type == "abc" && object2@type == "abc") {
+    type = "abc"
+  } else if (object1@type == "abcxyz" && object2@type == "abcxyz") {
+    type = "abcxyz"
+  }
+
   comparison = full_join(abcData1,
                          abcData2,
-                         by = c(object1@item, object2@item),
+                         by = setNames(object1@item, object2@item),
                          suffix = c(".1", ".2"))
 
   # Keep all comparisons where the value column changed by some margin.
@@ -529,6 +538,7 @@ setMethod("compare", signature = c("ABCXYZData", "ABCXYZData"), function(object1
 
   comparisonResult = new("ABCXYZComparison",
                          data = comparison,
+                         type = type,
                          valueDiff = as.numeric(valueDiff),
                          xyzCoefficientDiff = as.numeric(xyzCoefficientDiff),
                          unequalABC = unequalABC,
@@ -567,9 +577,10 @@ setMethod("show", "ABCXYZComparison", function(object) {
 
 #' Prints the summary of the comparison of two ABC/XYZ analyses
 #'
-#' summarizes the differences between two \code{ABCXYZData} objects.
+#' Summarizes the differences between two \code{ABCXYZData} objects.
 #'
 #' @param object Object of class ABCXYZComparison.
+#' @param withMissing Logical indicating whether missing categories will be shown. Default is \code{FALSE}.
 #' @return A contingency table showing the differences.
 #' @author Leon Binder \email{leon.binder@@th-deg.de}
 #' @author Bernhard Bauer \email{bernhard.bauer@@th-deg.de}
@@ -587,8 +598,24 @@ setMethod("show", "ABCXYZComparison", function(object) {
 #' comparison = compare(abcxyzData1, abcxyzData2)
 #' summary(comparison)
 #' @export
-setMethod("summary", "ABCXYZComparison", function(object) {
-  summary = xtabs(~ class.1 + class.2, object@data)
+setMethod("summary", "ABCXYZComparison", function(object, withMissing=FALSE) {
+
+  if (withMissing) {
+    if (object@type == "abc") {
+      classes = c("A", "B", "C")
+    } else if (object@type == "abcxyz") {
+      classes = c("AX", "AY", "AZ", "BX", "BY", "BZ", "CX", "CY", "CZ")
+    } else {
+      classes = c()
+    }
+
+    object@data$class.1 = factor(object@data$class.1, levels=classes, labels=classes)
+    object@data$class.2 = factor(object@data$class.2, levels=classes, labels=classes)
+
+  }
+
+  summary = xtabs(~ class.1 + class.2, object@data, drop.unused.levels=!withMissing)
+
   return(summary)
 })
 

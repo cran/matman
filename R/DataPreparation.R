@@ -108,7 +108,7 @@ aggregateData = function(data,
 #' @export
 expandData = function(data,
                       expand,
-                      expandTo = c("all", "included"),
+                      expandTo = c("all", "event"),
                       valueColumns,
                       latest_values = F,
                       valueLevels = NA,
@@ -162,7 +162,11 @@ expandData = function(data,
       fulldata <- fulldata %>% group_by(!!as.name(expand)) %>% fill(!!as.name(valueColumn))
     }
     ### rest with valueLevels
-    fulldata[which(is.na(fulldata[, valueColumn])), valueColumn] = valueLevels[i]
+    if(length(valueLevels)>1){
+      fulldata[which(is.na(fulldata[, valueColumn])), valueColumn] = valueLevels[i]
+    } else{
+      fulldata[which(is.na(fulldata[, valueColumn])), valueColumn] = valueLevels
+    }
   }
 
   fulldata <- as.data.frame(fulldata)
@@ -181,6 +185,7 @@ expandData = function(data,
   } else if (timestampFormat == "year") {
     fulldata[[timestamp]] = format(fulldata[[timestamp]], "%Y")
   }
+  fulldata <- setorderv(fulldata,expand)
   return(fulldata)
 }
 

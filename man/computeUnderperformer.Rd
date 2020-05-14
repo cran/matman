@@ -12,7 +12,8 @@ computeUnderperformer(
   timestampFormat = c("day", "week", "month", "quater", "year"),
   currentTime,
   thresholdValue = 0,
-  thresholdTime = 90
+  thresholdTime = 90,
+  use_latest = FALSE
 )
 }
 \arguments{
@@ -33,6 +34,8 @@ stock data by items.}
 for all items.}
 
 \item{thresholdTime}{Time for which the value shouldn't exceed the threshold value. Number declares the time in the format of timestampFormat}
+
+\item{use_latest}{boolean value. If TRUE data will expand and dates with noexisting values will be filled up with the latest known values}
 }
 \value{
 Returns a data frame listing all underperforming items, the date their stock was the last time over the threshold (lastover),
@@ -51,7 +54,8 @@ underperformer = computeUnderperformer(data=Stocks,
                                        timestampFormat = "day",
                                        currentTime = "2019-07-27",
                                        thresholdValue = "minstock",
-                                       thresholdTime = 90)
+                                       thresholdTime = 90,
+                                       use_latest = FALSE)
 }
 \seealso{
 \code{\link{computeOverperformer}} \code{\link{computeConstants}}

@@ -5,16 +5,18 @@
 \alias{summary,ABCXYZComparison-method}
 \title{Prints the summary of the comparison of two ABC/XYZ analyses}
 \usage{
-\S4method{summary}{ABCXYZComparison}(object)
+\S4method{summary}{ABCXYZComparison}(object, withMissing = FALSE)
 }
 \arguments{
 \item{object}{Object of class ABCXYZComparison.}
+
+\item{withMissing}{Logical indicating whether missing categories will be shown. Default is \code{FALSE}.}
 }
 \value{
 A contingency table showing the differences.
 }
 \description{
-summarizes the differences between two \code{ABCXYZData} objects.
+Summarizes the differences between two \code{ABCXYZData} objects.
 }
 \examples{
 data("Amount")

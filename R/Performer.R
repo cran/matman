@@ -1,6 +1,7 @@
+
 # Returns the maxima of the input values. This function does not show a warning if the vector
 # of input values is of length 0.
-.robustMax = function(x, na.rm = FALSE) {
+.robustMax = function(x, na.rm = TRUE) {
   if (length(x)>0) {
     return(max(x, na.rm = na.rm))
   } else {
@@ -22,6 +23,7 @@
 #' @param thresholdValue Name of the colum variable containing the items' stock threshold value or the threshold value used in this analysis
 #' for all items.
 #' @param thresholdTime Time for which the value shouldn't exceed the threshold value. Number declares the time in the format of timestampFormat
+#' @param use_latest boolean value. If TRUE data will expand and dates with noexisting values will be filled up with the latest known values
 #' @return Returns a data frame listing all underperforming items, the date their stock was the last time over the threshold (lastover),
 #' the duration in days since the stock is under the threshold (toolowindays), the average difference between the stock and the threshold
 #' (meandiff) and the count of switched between over- and underperformance (moves).
@@ -38,7 +40,8 @@
 #'                                        timestampFormat = "day",
 #'                                        currentTime = "2019-07-27",
 #'                                        thresholdValue = "minstock",
-#'                                        thresholdTime = 90)
+#'                                        thresholdTime = 90,
+#'                                        use_latest = FALSE)
 #' @export
 computeUnderperformer = function(data,
                                  value,
@@ -47,8 +50,27 @@ computeUnderperformer = function(data,
                                  timestampFormat = c("day", "week", "month", "quater","year"),
                                  currentTime,
                                  thresholdValue = 0,
-                                 thresholdTime = 90) {
+                                 thresholdTime = 90,
+                                 use_latest = FALSE) {
 
+
+  if(use_latest == TRUE & !is.numeric(thresholdValue)){
+    data<-expandData(data = data,
+                     expand = group,
+                     expandTo = "all",
+                     valueColumns = c(value,thresholdValue), latest_values = T,timestamp = timestamp, timestampFormat = timestampFormat, keepData = F)
+  }
+
+  if(use_latest == TRUE & is.numeric(thresholdValue)){
+    data<-expandData(data = data,
+                     expand = group,
+                     expandTo = "all",
+                     valueColumns = value,
+                     latest_values = T,
+                     timestamp = timestamp,
+                     timestampFormat = timestampFormat,
+                     keepData = F)
+  }
 
   ### Bring timestamp and currentTime to date format
   if (timestampFormat == "day") {
@@ -88,9 +110,10 @@ computeUnderperformer = function(data,
     currentdata = data[which(data[, timestamp] == currentTime), c(group, value, timestamp, thresholdValue)]
     lastexceed = setDT(data)[, list(
       lastover = .robustMax(c(min(get(timestamp), na.rm = T), get(timestamp)[get(..value) > get(thresholdValue)])),
+      mindate = .robustMax(min(get(timestamp), na.rm = T)),
       moves = length(rle(get(..value)[get(timestamp) > .robustMax(get(timestamp)[get(..value) > get(thresholdValue)])])$length),
       meandiff = round(mean(get(thresholdValue)[get(timestamp) > .robustMax(get(timestamp)[get(..value) > get(thresholdValue)])] -
-                              get(..value)[get(timestamp) > .robustMax(get(timestamp)[get(..value) > get(thresholdValue)])]))
+                              get(..value)[get(timestamp) > .robustMax(get(timestamp)[get(..value) > get(thresholdValue)])], na.rm = T),digits = 2)
     ),
     by = eval(get("group"))]
   } else {
@@ -98,8 +121,9 @@ computeUnderperformer = function(data,
     currentdata$minimumStock = thresholdValue
     lastexceed = setDT(data)[, list(
       lastover = .robustMax(c(min(get(timestamp), na.rm = T), get(timestamp)[get(..value) > thresholdValue])),
+      mindate = .robustMax(min(get(timestamp), na.rm = T)),
       moves = length(rle(get(..value)[get(timestamp) > .robustMax(get(timestamp)[get(..value) > thresholdValue])])$length),
-      meandiff = round(mean(thresholdValue - get(..value)[get(timestamp) > .robustMax(get(timestamp)[get(..value) > thresholdValue])]))
+      meandiff = round(mean(thresholdValue - get(..value)[get(timestamp) > .robustMax(get(timestamp)[get(..value) > thresholdValue])], na.rm = T),digits = 2)
     ),
     by = eval(get("group"))]
   }
@@ -111,44 +135,56 @@ computeUnderperformer = function(data,
   if(timestampFormat == "day"){
     result = result[result$lastover <= as.Date(currentTime) - thresholdTime, ]
     if(nrow(result)>0){
-    result$toolowindays = result[[timestamp]] - result$lastover
+      result$toolowindays = result[[timestamp]] - result$lastover
     }
   }
   else if(timestampFormat =="week"){
     result = result[result$lastover <= as.Date(currentTime) - as.difftime(thresholdTime, units="weeks"), ]
     if(nrow(result)>0){
-    result$toolowinweeks = paste((result[[timestamp]] - result$lastover)/7,"weeks")
-    result$lastover = ISOweek(result$lastover)
-    result[[timestamp]] = ISOweek(result[[timestamp]])
+      result$toolowinweeks = paste((result[[timestamp]] - result$lastover)/7,"weeks")
+      result$lastover = ISOweek(result$lastover)
+      result[[timestamp]] = ISOweek(result[[timestamp]])
     }
   }
   else if(timestampFormat == "month"){
     result = result[result$lastover <= seq(as.Date(currentTime), length = 2, by = paste0("-",thresholdTime," months"))[2], ]
     if(nrow(result)>0){
-    result$toolowinmonth = paste((year(result[[timestamp]]) - year(result$lastover))*12 + (month(result[[timestamp]]) - month(result$lastover)),"month")
-    result$lastover = format(result$lastover, "%Y-%m")
-    result[[timestamp]] = format(result[[timestamp]], "%Y-%m")
+      result$toolowinmonth = paste((year(result[[timestamp]]) - year(result$lastover))*12 + (month(result[[timestamp]]) - month(result$lastover)),"month")
+      result$lastover = format(result$lastover, "%Y-%m")
+      result[[timestamp]] = format(result[[timestamp]], "%Y-%m")
     }
   }
   else if(timestampFormat == "quarter"){
     result = result[result$lastover <= seq(as.Date(currentTime), length = 2, by = paste0("-",thresholdTime," quarters"))[2], ]
     if(nrow(result)>0){
-    result$toolowinquarters = paste((year(result[[timestamp]]) - year(result$lastover))*4 + (quarter(result[[timestamp]]) - quarter(result$lastover)),"quaters")
-    result$lastover = paste0(year(result$lastover), "-Q", quarter(result$lastover))
-    result[[timestamp]] = paste0(year(result[[timestamp]]), "-Q", quarter(result[[timestamp]]))
+      result$toolowinquarters = paste((year(result[[timestamp]]) - year(result$lastover))*4 + (quarter(result[[timestamp]]) - quarter(result$lastover)),"quaters")
+      result$lastover = paste0(year(result$lastover), "-Q", quarter(result$lastover))
+      result[[timestamp]] = paste0(year(result[[timestamp]]), "-Q", quarter(result[[timestamp]]))
     }
   }
   else if(timestampFormat == "year"){
     result = result[result$lastover <= seq(as.Date(currentTime), length = 2, by = paste0("-",thresholdTime," years"))[2], ]
     if(nrow(result)>0){
-    result$toolowinyears = paste(year(result[[timestamp]]) - year(result$lastover),"years")
-    result$lastover = year(result$lastover)
-    result[[timestamp]] = year(result[[timestamp]])
+      result$toolowinyears = paste(year(result[[timestamp]]) - year(result$lastover),"years")
+      result$lastover = year(result$lastover)
+      result[[timestamp]] = year(result[[timestamp]])
     }
   }
 
+  if(any(result$lastover == result$mindate )){
+
+    equals <- which(result$lastover == result$mindate)
+
+    result$lastover<- as.character(result$lastover)
+    result$lastover[equals] <- paste(">=", result$lastover[equals])
+    result[, ncol(result)]<- as.character( result[, ncol(result)])
+    result[equals, ncol(result)] <- paste(">=", result[equals, ncol(result)])
+  }
+  result$mindate <- NULL
+
   return(result)
 }
+
 
 
 
@@ -166,6 +202,7 @@ computeUnderperformer = function(data,
 #' @param thresholdValue Name of the colum variable containing the items' stock threshold value or the threshold value used in this analysis
 #' for all items.
 #' @param thresholdTime Time for which the value shouldn't exceed the threshold value. Number declares the time in the format of timestampFormat.
+#' @param use_latest boolean value. If TRUE data will expand and dates with noexisting values will be filled up with the latest known values.
 #' @return Returns a data frame listing all overperforming items, the date their stock was the last time under the threshold (lastunder),
 #' the duration in days since the stock is over the threshold (toolowindays), the average difference between the stock and the threshold
 #' (meandiff) and the count of switched between over- and underperformance (moves).
@@ -182,7 +219,8 @@ computeUnderperformer = function(data,
 #'                      timestampFormat = "day",
 #'                      currentTime = "2019-07-27",
 #'                      thresholdValue = "reorderlevel",
-#'                      thresholdTime = 0)
+#'                      thresholdTime = 0,
+#'                      use_latest = FALSE)
 #' @export
 computeOverperformer = function(data,
                                 value,
@@ -191,7 +229,28 @@ computeOverperformer = function(data,
                                 timestampFormat = c("day", "week", "month", "quater","year"),
                                 currentTime,
                                 thresholdValue = 0,
-                                thresholdTime = 90) {
+                                thresholdTime = 90,
+                                use_latest = FALSE) {
+
+
+  if(use_latest == TRUE & !is.numeric(thresholdValue)){
+    data<-expandData(data = data,
+                     expand = group,
+                     expandTo = "all",
+                     valueColumns = c(value,thresholdValue), latest_values = T,timestamp = timestamp, timestampFormat = timestampFormat, keepData = F)
+  }
+
+  if(use_latest == TRUE & is.numeric(thresholdValue)){
+    data<-expandData(data = data,
+                     expand = group,
+                     expandTo = "all",
+                     valueColumns = value,
+                     latest_values = T,
+                     timestamp = timestamp,
+                     timestampFormat = timestampFormat,
+                     keepData = F)
+  }
+
 
   ### Bring timestamp and currentTime to date format
   if (timestampFormat == "day") {
@@ -230,9 +289,10 @@ computeOverperformer = function(data,
     currentdata = data[which(data[, timestamp] == currentTime), c(group, value, timestamp, thresholdValue)]
     lastfallshort = setDT(data)[, list(
       lastunder = .robustMax(c(min(get(timestamp), na.rm = T), get(timestamp)[get(..value) < get(thresholdValue)])),
+      mindate = .robustMax(min(get(timestamp), na.rm = T)),
       moves = length(rle(get(..value)[get(timestamp) > .robustMax(get(timestamp)[get(..value) < get(thresholdValue)], na.rm = T)])$length),
       meandiff = round(mean(get(..value)[get(timestamp) > .robustMax(get(timestamp)[get(..value) < get(thresholdValue)])] -
-                              get(thresholdValue)[get(timestamp) > .robustMax(get(timestamp)[get(..value) < get(thresholdValue)])]))
+                              get(thresholdValue)[get(timestamp) > .robustMax(get(timestamp)[get(..value) < get(thresholdValue)])]), digits = 2)
     ),
     by = eval(get("group"))]
   } else {
@@ -240,8 +300,9 @@ computeOverperformer = function(data,
     currentdata$thresholdValue = thresholdValue
     lastfallshort = setDT(data)[, list(
       lastunder = .robustMax(c(min(get(timestamp), na.rm = T), get(timestamp)[get(..value) < thresholdValue])),
+      mindate = .robustMax(min(get(timestamp), na.rm = T)),
       moves = length(rle(get(..value)[get(timestamp) > .robustMax(get(timestamp)[get(..value) < thresholdValue], na.rm = T)])$length),
-      meandiff = round(mean(get(..value)[get(timestamp) > .robustMax(get(timestamp)[get(..value) < thresholdValue])] - thresholdValue))
+      meandiff = round(mean(get(..value)[get(timestamp) > .robustMax(get(timestamp)[get(..value) < thresholdValue])] - thresholdValue), digits = 2)
     ),
     by = eval(get("group"))]
   }
@@ -288,6 +349,18 @@ computeOverperformer = function(data,
       result[[timestamp]] = year(result[[timestamp]])
     }
   }
+
+  if(any(result$lastunder == result$mindate )){
+
+    equals <- which(result$lastunder == result$mindate)
+
+    result$lastunder<- as.character(result$lastunder)
+    result$lastunder[equals] <- paste(">=", result$lastunder[equals])
+    result[, ncol(result)]<- as.character( result[, ncol(result)])
+    result[equals, ncol(result)] <- paste(">=", result[equals, ncol(result)])
+  }
+  result$mindate <- NULL
+
 
   return(result)
 }
@@ -367,6 +440,7 @@ computeConstants = function(data,
                                  value = last(rle(get(..value))$value)),
                            by= eval(get("group"))]
 
+
   ### Determine date since when the data at least should be constant
 
   startdate = as.Date(currentTime) - thresholdTime
@@ -402,7 +476,10 @@ computeConstants = function(data,
   }
 
   result = result[order(result$no_change_since),]
+
+
   names(result) <- c(group, "no_change_since", value)
+
 
   return(result)
 }
