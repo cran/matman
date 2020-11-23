@@ -1,8 +1,8 @@
 Package: matman
 Type: Package
 Title: Material Management
-Version: 1.1.0
-Date: 2020-05-13
+Version: 1.1.1
+Date: 2020-11-23
 Authors@R: c(
   person("Leon", "Binder", email = "leon.binder@th-deg.de", role = c("cre", "aut")),
   person("Bernhard", "Bauer", email = "bernhard.bauer@th-deg.de", role = "aut"),
@@ -17,11 +17,11 @@ Imports: methods, graphics, stats, utils, data.table, dplyr, tidyr,
 Encoding: UTF-8
 LazyData: true
 LazyLoad: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 NeedsCompilation: no
-Packaged: 2020-05-14 06:58:40 UTC; lBinder
+Packaged: 2020-11-23 12:55:25 UTC; Leon
 Author: Leon Binder [cre, aut],
   Bernhard Bauer [aut],
   Michael Scholz [aut]
 Repository: CRAN
-Date/Publication: 2020-05-14 07:20:02 UTC
+Date/Publication: 2020-11-23 13:40:02 UTC

@@ -1,3 +1,8 @@
+# matman 1.1.1 (23/11/2020)
+
+## Bug Fixes
+* Warning of error at start of matmanDemo() because of installation from binary
+
 # matman 1.1.0 (05/13/2020)
 
 ## New Features

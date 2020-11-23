@@ -9,6 +9,17 @@
 #'
 #' @export
 matmanDemo <- function() {
-  shinyApp(ui = .shinyAppUI, server = .shinyAppServer)
+  warning("matmanDemo currently only works if you install matman by source - 
+  otherwise there will be the error 'Couldn't normalize path in `addResourcePath`': \n
+  use:  install.packages('matman', type='source') \n
+  Do you want to proceed? [y]/n", immediate.=TRUE)
+  
+  user_input = readline()
+  
+  cat(user_input)
+  
+  if (user_input == "y" | user_input == "") {
+    shinyApp(ui = .shinyAppUI, server = .shinyAppServer)
+  }
 }
 

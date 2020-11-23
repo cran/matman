@@ -10,7 +10,7 @@ A set of functions, classes and methods for performing ABC and ABC/XYZ analyses,
 }
 \details{
 \tabular{ll}{ Package: \tab matman\cr Type: \tab Package\cr Version:
-\tab 1.1.0\cr Date: \tab 2020-05-13\cr License: \tab GPL-3\cr Depends: \tab
+\tab 1.1.1\cr Date: \tab 2020-11-23\cr License: \tab GPL-3\cr Depends: \tab
 R (>= 3.5.0), stats\cr }
 }
 \author{

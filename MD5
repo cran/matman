@@ -1,6 +1,6 @@
-6afb52ffe5e14d31a29cdc9281e1da03 *DESCRIPTION
+7c03b48a020e5bb39d6d18639b111cd0 *DESCRIPTION
 37236dc4783a978c6a5ee719ce9a4765 *NAMESPACE
-345dc34ae8be31854b922fa611934c41 *NEWS.md
+2948e14e832f42a68f574a29fa67fbae *NEWS.md
 49bf0d7a4b9e03ae4bfc3643ad73a3a7 *R/ABCXYZanalysis.R
 e39f4af666baf4895e039d5ad123cda5 *R/DataPreparation.R
 06e7e803dbf8a4bc8738a1934bb6577d *R/Forecast.R
@@ -9,8 +9,8 @@ b3a90f1b9fa90aeae034c997bc19b3a9 *R/Plot.R
 a32b8e102e29b16704ae38e2fdae25d7 *R/TimeVariation.R
 d19f31952b59f5bb488f57975c849de3 *R/data.R
 4bcdce7944e39a7e20ad42824cdc43dc *R/globals.R
-1c6803f0ff7c202b82314a10c0575118 *R/launchApp.R
-efd86e98b6c85153797362d111ae52ff *R/matman-package.R
+8eb67ded232a75c4d8958c82747ea57d *R/launchApp.R
+02fe4df86599da139bd03efc87c48174 *R/matman-package.R
 f41290d0d6fbe49f427068671b757e0b *R/shinyAppServer.R
 0c3e373614a23f61e5ded603b387f0c6 *R/shinyAppUI.R
 d09a4554af5f7f69c9fd863a60e9943f *data/Amount.rda
@@ -29,7 +29,7 @@ ffcdf4503cfd5aa50c105db3576e4cf9 *man/Forecast-class.Rd
 5c799ed324f8a355ed3daa1db7439118 *man/computeUnderperformer.Rd
 56a7daa379f4dc91516659e2f6acd9ef *man/detectTimeVariations.Rd
 b73d33414d5a5199316666fd6c12b740 *man/expandData.Rd
-ff9310c2854ae1f58cd56ef050985ee3 *man/matman-package.Rd
+09489ef69e99b74bdb344101002c8f47 *man/matman-package.Rd
 34194f114a21cb11231e6012489cfcbc *man/matmanDemo.Rd
 379449ec9ea3658ebaaa106046cabda1 *man/plot-ABCXYZData-ANY-method.Rd
 7f5623792108ebe16ff7b36aaf93b97a *man/plotValueSeries.Rd
