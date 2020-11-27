@@ -1,8 +1,8 @@
 Package: matman
 Type: Package
 Title: Material Management
-Version: 1.1.1
-Date: 2020-11-23
+Version: 1.1.2
+Date: 2020-11-27
 Authors@R: c(
   person("Leon", "Binder", email = "leon.binder@th-deg.de", role = c("cre", "aut")),
   person("Bernhard", "Bauer", email = "bernhard.bauer@th-deg.de", role = "aut"),
@@ -19,9 +19,9 @@ LazyData: true
 LazyLoad: true
 RoxygenNote: 7.1.1
 NeedsCompilation: no
-Packaged: 2020-11-23 12:55:25 UTC; Leon
+Packaged: 2020-11-27 09:09:14 UTC; Leon
 Author: Leon Binder [cre, aut],
   Bernhard Bauer [aut],
   Michael Scholz [aut]
 Repository: CRAN
-Date/Publication: 2020-11-23 13:40:02 UTC
+Date/Publication: 2020-11-27 11:10:02 UTC

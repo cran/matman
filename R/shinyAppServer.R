@@ -1,10 +1,6 @@
-# Shiny app server function
-#
-# @param input provided by shiny
-# @param output provided by shiny
-#
-.shinyAppServer <-
-  function(input, output) {
+.shinyAppServer <- function() {
+  
+  server = function(input, output) {
 
     ##### data sets #####
 
@@ -685,3 +681,6 @@
     #####
 
   }
+ 
+  return(server) 
+}

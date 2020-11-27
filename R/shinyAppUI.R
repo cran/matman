@@ -1,15 +1,10 @@
-#' Shiny app server object
-
-load("data/Amount.rda")
-load("data/Stocks.rda")
-
-
-.shinyAppUI <-
-  dashboardPage(
+.shinyAppUI <- function() {
+  
+  ui = dashboardPage(
     dashboardHeader(
-      title = "Examples matman "
+      title = "Examples matman"
     ),
-
+    
     dashboardSidebar(
       sidebarMenu(
         br(),
@@ -26,11 +21,11 @@ load("data/Stocks.rda")
         menuItem("plotValueSeries", tabName = "valser")
       )
     ),
-
+    
     dashboardBody(
-
+      
       tabItems(
-
+        
         ######## data sets #########
         tabItem(tabName = "dats",
                 tabBox(title = "Data Sets", width = 12,
@@ -42,11 +37,11 @@ load("data/Stocks.rda")
                        )
                 )
         ),
-
+        
         ########
-
+        
         ########  aggregateData ########
-
+        
         tabItem(tabName = "agdat",
                 fluidRow(
                   box(width=9, title = "Parameters:", solidHeader =T, status ="primary", collapsible = T,
@@ -80,7 +75,7 @@ load("data/Stocks.rda")
                       textOutput("aggDatFormel_Amount"),
                       tags$style(type="text/css", "#aggDatFormel_Amount {white-space: pre-wrap;}")
                   )
-
+                  
                 ),
                 fluidRow(
                   box(width = 12, title = "Result:", solidHeader =T, status ="primary",
@@ -89,9 +84,9 @@ load("data/Stocks.rda")
                 )
         ),
         ########
-
+        
         ######## expandData #########
-
+        
         tabItem(tabName = "exdat",
                 fluidRow(
                   box(width=9, title = "Parameters:", solidHeader =T, status ="primary", collapsible = T,
@@ -139,9 +134,9 @@ load("data/Stocks.rda")
                 )
         ),
         ########
-
+        
         ######## compute ABC ##########
-
+        
         tabItem(tabName = "compABC",
                 fluidRow(
                   tabBox(width = 12, title = "Functions",
@@ -175,7 +170,7 @@ load("data/Stocks.rda")
                                          textOutput("ABCFormel"),
                                          tags$style(type="text/css", "#ABCFormel {white-space: pre-wrap;}")
                                     )
-
+                                    
                                   ),
                                   fluidRow(
                                     box(width = 12, title = "Results", solidHeader = T, status = "primary",
@@ -210,7 +205,7 @@ load("data/Stocks.rda")
                                     )
                                   )
                          ),
-
+                         
                          tabPanel("compare",
                                   fluidRow(
                                     box(width = 9, title = "Parameters:", status = "primary", solidHeader = T, collapsible = T,
@@ -261,11 +256,11 @@ load("data/Stocks.rda")
                   )
                 )
         ),
-
+        
         ########
-
+        
         ######## compute ABCXYZ ##########
-
+        
         tabItem(tabName = "compABCXYZ",
                 fluidRow(
                   tabBox(width = 12, title = "Functions",
@@ -311,7 +306,7 @@ load("data/Stocks.rda")
                                          textOutput("ABCXYZFormel"),
                                          tags$style(type="text/css", "#ABCXYZFormel {white-space: pre-wrap;}")
                                     )
-
+                                    
                                   ),
                                   fluidRow(
                                     box(width = 12, title = "Results", solidHeader = T, status = "primary",
@@ -346,7 +341,7 @@ load("data/Stocks.rda")
                                     )
                                   )
                          ),
-
+                         
                          tabPanel("compare",
                                   fluidRow(
                                     box(width = 9, title = "Parameters:", status = "primary", solidHeader = T, collapsible = T,
@@ -405,11 +400,11 @@ load("data/Stocks.rda")
                   )
                 )
         ),
-
+        
         ########
-
+        
         ######## Performer ##########
-
+        
         tabItem(tabName = "perform",
                 fluidRow(
                   box(width=12, title = "Parameters:", solidHeader = T, status = "primary", collapsible = T,
@@ -447,10 +442,10 @@ load("data/Stocks.rda")
                                numericInput("performthrestime", "threshold time", min=1, value = 90, step = 1 )
                         )
                       )
-
+                      
                   )
                 ),
-
+                
                 fluidRow(
                   tabBox(width = 12, title = "Functions",
                          tabPanel("computeOverperformer",
@@ -490,9 +485,9 @@ load("data/Stocks.rda")
                 )
         ),
         ########
-
+        
         ######## predictValue ##########
-
+        
         tabItem(tabName = "pred",
                 fluidRow(
                   box(width=9, title = "Parameters:", solidHeader = T, status = "primary", collapsible = T,
@@ -553,13 +548,13 @@ load("data/Stocks.rda")
                       )
                   )
                 )
-
-
+                
+                
         ),
         ########
-
+        
         ######## timeVariations ##########
-
+        
         tabItem(tabName = "timevar",
                 fluidRow(
                   box(width=9, title = "Parameters:", solidHeader =T, status = "primary", collapsible = T,
@@ -590,7 +585,7 @@ load("data/Stocks.rda")
                         column(width = 3,
                                numericInput("timevardatrecent", "recent time Periods", value = 5, min = 5, step = 1)
                         )
-
+                        
                       )
                   ),
                   box(width = 3, title = "Function:", solidHeader =T, status = "primary", collapsible = T,
@@ -605,9 +600,9 @@ load("data/Stocks.rda")
                 )
         ),
         ########
-
+        
         ######## plotValueSeries ########
-
+        
         tabItem(tabName = "valser",
                 fluidRow(
                   box(width=9, title = "Parameters:", solidHeader =T, status = "primary", collapsible = T,
@@ -644,7 +639,7 @@ load("data/Stocks.rda")
                         column(width = 3,
                                radioButtons("valsertrendtype", "trendlinetype", choices = c("simple", "weighted"), selected= "simple", inline = T)
                         )
-
+                        
                       )
                   ),
                   box(width = 3, title = "Function:", solidHeader =T, status = "primary", collapsible = T,
@@ -656,7 +651,7 @@ load("data/Stocks.rda")
                   box(width = 12, title = "Result", solidHeader =T, status = "primary",
                       plotlyOutput("valserEnd"), style = "overflow-y: scroll;overflow-x: scroll;"
                   )
-
+                  
                 )
         )
         ########
@@ -664,3 +659,6 @@ load("data/Stocks.rda")
     ),
     skin = "blue"
   )
+  
+  return(ui)
+}

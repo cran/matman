@@ -1,3 +1,8 @@
+# matman 1.1.2 (27/11/2020)
+
+## Bug Fixes
+* matmanDemo() works now if the package was installed from binary
+
 # matman 1.1.1 (23/11/2020)
 
 ## Bug Fixes
