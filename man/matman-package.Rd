@@ -6,11 +6,11 @@
 \alias{matman}
 \title{Material Management}
 \description{
-A set of functions, classes and methods for performing ABC and ABC/XYZ analyses, identifying overperforming, underperforming and
+A set of functions, classes and methods for performing ABC and ABC/XYZ analyses, identifying overperforming, underperforming and constantly performing items, and plotting, analyzing as well as predicting the temporal development of items.
 }
 \details{
 \tabular{ll}{ Package: \tab matman\cr Type: \tab Package\cr Version:
-\tab 1.1.2\cr Date: \tab 2020-11-27\cr License: \tab GPL-3\cr Depends: \tab
+\tab 1.1.4\cr Date: \tab 2021-11-15\cr License: \tab GPL-3\cr Depends: \tab
 R (>= 3.5.0), stats\cr }
 }
 \author{

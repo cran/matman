@@ -20,7 +20,7 @@ computeABCXYZAnalysis(
 \arguments{
 \item{data}{Data frame or matrix on which the ABC analysis is performed.}
 
-\item{value}{Name of the column variable that contains the value for the ABC and XYZ analysis.}
+\item{value}{Name of the column variable that contains the value for the ABCXYZ analysis.}
 
 \item{item}{Names of the columns including the item names or identifiers (e.g., product name, EAN).}
 
@@ -39,7 +39,7 @@ computeABCXYZAnalysis(
 \item{ignoreZeros}{Whether zero values should be ignored in XYZ-analysis.}
 }
 \value{
-Returns an \code{ABCXYZData} object.
+Returns an \code{ABCXYZData} object. Only positive values are displayed
 }
 \description{
 Divides a given data frame into 3 classes, A, B, C, according to the value of one column (e.g., revenue).

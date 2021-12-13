@@ -1,3 +1,10 @@
+# matman 1.1.3 (13/12/2021)
+* increase performance of functions by waiveing package ISOweek from the code
+* new needed packages: lubridate, parsedate
+* function aggregateData is now consistent for multiple value columns
+* function expandData is now consistent for multiple boolean latest_values and multiple expand variables
+* ABC-Analysis just uses positive sums.
+
 # matman 1.1.2 (27/11/2020)
 
 ## Bug Fixes

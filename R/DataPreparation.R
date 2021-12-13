@@ -3,7 +3,7 @@
 #' Aggregates a data frame based on a timestamp column to days, weeks, months, quarters, years or total.
 #'
 #' @param data                  Data frame or matrix on which the ABC analysis is performed.
-#' @param value                 Name of the column variable that contains the value for the ABC and XYZ analysis.
+#' @param value                 Name(s) of the column variable(s) that contains the values for the ABC and XYZ analysis.
 #' @param item                  Names of the columns including the item names or identifiers (e.g., product name, EAN).
 #' @param timestamp             Name of the column including the timestamp. This column should be in POSIX or Date-format.
 #' @param temporalAggregation   Temporal aggregation mode for the XYZ-analysis. Possible modes are 'day', 'week', 'month', 'quarter', 'year',
@@ -25,13 +25,13 @@
 #'     temporalAggregation = "quarter")
 #' @export
 aggregateData = function(data,
-                     value=NULL,
-                     item,
-                     timestamp,
-                     temporalAggregation = c("day", "week", "month", "quarter", "year", "total"),
-                     fiscal = 1,
-                     aggregationFun = sum) {
-  if (!value %in% names(data)) {
+                         value=NULL,
+                         item,
+                         timestamp,
+                         temporalAggregation = c("day", "week", "month", "quarter", "year", "total"),
+                         fiscal = 1,
+                         aggregationFun = sum) {
+  if (!all(value %in% names(data))) {
     stop(paste("Data does not include column ", value, ".", sep = ""))
   }
   if (!all(item %in% names(data))) {
@@ -40,40 +40,44 @@ aggregateData = function(data,
   if (!timestamp %in% names(data)) {
     stop(paste("Data does not include column ", timestamp, ".", sep = ""))
   }
+  
   # Conversion from POSIX to Date.
   # UNTESTED FOR DIFFERENT FORMATS! MAYBE AN ARGUMENT timestampFormat IS NECESSARY?
-  data[[timestamp]] = as.Date(as.character(data[[timestamp]]))
-
+  if (!inherits(data[[timestamp]], 'Date')){
+    data[[timestamp]] = as.Date(as.character(data[[timestamp]]))
+  }
+  
   # If the business year does not start in January week, month, quarter and year are shifted to the start of business year
   if (temporalAggregation!="day" & fiscal > 1 ) {
     data[[timestamp]]<- as.POSIXlt(data[[timestamp]])
     data[[timestamp]]$mon<- data[[timestamp]]$mon + (12-fiscal+1)
     data[[timestamp]] <- as.Date(data[[timestamp]])
   }
-
-
+  
   # Aggregation based on temporalAggregation.
   if (temporalAggregation == "day") {
-    data$day = data[[timestamp]]
-    aggregatedData = as.data.table(data)[,list(agg = aggregationFun(get(..value),na.rm=T)), keyby = c(unlist(item), "day")]
+    data[[temporalAggregation]] = data[[timestamp]]
   } else if (temporalAggregation == "week") {
-    data$week = ISOweek(data[[timestamp]])
-    aggregatedData = as.data.table(data)[,list(agg = aggregationFun(get(..value),na.rm=T)), keyby = c(unlist(item), "week")]
+    data[[temporalAggregation]] = paste(isoyear(data[[timestamp]]), sprintf("%02d", isoweek(data[[timestamp]])), sep = "-W")
   } else if (temporalAggregation == "month") {
-    data$month = paste(year(data[[timestamp]]), sprintf("%02d", month(data[[timestamp]])), sep = "-")
-    aggregatedData = as.data.table(data)[,list(agg = aggregationFun(get(..value),na.rm=T)), keyby = c(unlist(item), "month")]
+    data[[temporalAggregation]] = paste(year(data[[timestamp]]), sprintf("%02d", month(data[[timestamp]])), sep = "-")
   } else if (temporalAggregation == "quarter") {
-    data$quarter = paste(year(data[[timestamp]]), quarter(data[[timestamp]]), sep = "-Q")
-    aggregatedData = as.data.table(data)[,list(agg = aggregationFun(get(..value),na.rm=T)), keyby = c(unlist(item), "quarter")]
+    data[[temporalAggregation]] = paste(year(data[[timestamp]]), quarter(data[[timestamp]]), sep = "-Q")
   } else if (temporalAggregation == "year") {
-    data$year = year(data[[timestamp]])
-    aggregatedData = as.data.table(data)[,list(agg = aggregationFun(get(..value),na.rm=T)), keyby = c(unlist(item), "year")]
+    data[[temporalAggregation]] = year(data[[timestamp]])
   } else if (temporalAggregation == "total") {
-    aggregatedData = as.data.table(data)[,list(agg = aggregationFun(get(..value),na.rm=T)), keyby = c(unlist(item))]
+    data[[temporalAggregation]] <- "total"
   }
-  names(aggregatedData)[which(names(aggregatedData) == "agg")] = value
-  return(aggregatedData)
+  
+  # Shrink data to relevant variables
+  data <- data[,c(temporalAggregation, item, value)]
+  
+  help1 <- c(temporalAggregation, item)
+  aggregatedData = as.data.table(data)[,lapply(.SD, aggregationFun), keyby = eval(get("help1"))]
+  
+  return(data.frame(aggregatedData))
 }
+
 
 
 #' Expands a temporal data frame
@@ -116,51 +120,45 @@ expandData = function(data,
                       timestampFormat = c("day", "week", "month", "quarter", "year"),
                       keepData = T
 ) {
-
+  
   ### Bring timestamp to daily format
-  if (timestampFormat == "day") {
-    data[[timestamp]] = as.Date(as.character(data[[timestamp]]))
-  }
-  else if (timestampFormat == "week") {
-    data[[timestamp]] = paste0(data[[timestamp]], "-1")
-    data[[timestamp]] = ISOweek2date(data[[timestamp]])
-  }
-  else if (timestampFormat == "month") {
-    data[[timestamp]] = paste0(data[[timestamp]], "-01")
-    data[[timestamp]] = as.Date(data[[timestamp]], format = "%Y-%m-%d")
+  if (timestampFormat %in% c("day", "week", "month", "year")) {
+    data[[timestamp]] = as.Date(parse_iso_8601(data[[timestamp]]))
   }
   else if (timestampFormat == "quarter") {
-    data[["month"]]<-as.numeric(substr(data[[timestamp]],7,7))*3
-    data[[timestamp]] = paste0(substr(data[[timestamp]],1,4), "-", data[["month"]], "-01")
-    data[[timestamp]] = as.Date(data[[timestamp]], format = "%Y-%m-%d")
-    data$month<-NULL
-  }
-  else if (timestampFormat == "year") {
-    data[[timestamp]] = paste0(data[[timestamp]], "-01-01")
+    help<-as.numeric(substr(data[[timestamp]],7,7))*3
+    data[[timestamp]] = paste0(substr(data[[timestamp]],1,4), "-",help, "-01")
     data[[timestamp]] = as.Date(data[[timestamp]], format = "%Y-%m-%d")
   }
-
-
+  
+  
   ### Extend and join the data
   if (expandTo == "all") {
     dates = data.frame(stamp = seq(min(data[[timestamp]], na.rm = TRUE), max(data[[timestamp]], na.rm = TRUE), by = timestampFormat))
   } else if (expandTo == "event") {
     dates = data.frame(stamp=sort(unique(data[[timestamp]])))
   }
-
+  
   names(dates) = timestamp
-  extend = data %>% select(expand) %>% distinct()
+  extend = data %>% select(all_of(expand)) %>% distinct()
   datesextend = crossing(dates, extend)
   fulldata = full_join(datesextend, data)
-
+  
   #### Fill data
   for (i in 1:length(valueColumns)) {
     valueColumn = valueColumns[i]
-
+    
     ### with latest values
-    if(latest_values){
-      fulldata <- fulldata %>% group_by(!!as.name(expand)) %>% fill(!!as.name(valueColumn))
+    if(length(latest_values) == 1){
+      if(latest_values){
+        fulldata <- fulldata %>% group_by(across(expand)) %>% fill(!!as.name(valueColumn))
+      }
+    } else {
+      if(latest_values[i]){
+        fulldata <- fulldata %>% group_by(across(expand)) %>% fill(!!as.name(valueColumn))
+      }
     }
+    
     ### rest with valueLevels
     if(length(valueLevels)>1){
       fulldata[which(is.na(fulldata[, valueColumn])), valueColumn] = valueLevels[i]
@@ -168,22 +166,22 @@ expandData = function(data,
       fulldata[which(is.na(fulldata[, valueColumn])), valueColumn] = valueLevels
     }
   }
-
+  
   fulldata <- as.data.frame(fulldata)
-
+  
   if (keepData == F) {
     fulldata = fulldata[, c(timestamp, expand, valueColumns)]
   }
-
+  
   #### Bring timestamp in original format
   if (timestampFormat == "week") {
-    fulldata[[timestamp]] = ISOweek(fulldata[[timestamp]])
+    fulldata[[timestamp]] = paste(isoyear(fulldata[[timestamp]]), sprintf("%02d", isoweek(fulldata[[timestamp]])), sep = "-W")
   } else if (timestampFormat == "month") {
-    fulldata[[timestamp]] = format(fulldata[[timestamp]], "%Y-%m")
+    fulldata[[timestamp]] = paste(year(fulldata[[timestamp]]), sprintf("%02d", month(fulldata[[timestamp]])), sep = "-")
   } else if (timestampFormat == "quarter") {
     fulldata[[timestamp]] = paste0(year(fulldata[[timestamp]]), "-Q", quarter(fulldata[[timestamp]]))
   } else if (timestampFormat == "year") {
-    fulldata[[timestamp]] = format(fulldata[[timestamp]], "%Y")
+    fulldata[[timestamp]] = year(fulldata[[timestamp]])
   }
   fulldata <- setorderv(fulldata,expand)
   return(fulldata)

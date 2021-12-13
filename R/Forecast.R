@@ -94,7 +94,7 @@ setClass(
     dates = do.call("c", lapply(1:n, .add.days, maxDate))
   } else if (temporalAggregation == "week") {
     days = do.call("c", lapply(1:n, .add.weeks, maxDate))
-    dates = ISOweek(days)
+    dates = paste(isoyear(days), sprintf("%02d", isoweek(days)), sep = "-W")
   } else if (temporalAggregation == "month") {
     days = do.call("c", lapply(1:n, .add.months, maxDate))
     dates = paste(year(days), sprintf("%02d", month(days)), sep = "-")

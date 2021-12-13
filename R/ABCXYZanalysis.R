@@ -61,8 +61,10 @@ setClass(
 #' data("Amount")
 #' data1 = Amount[sample(1:nrow(Amount), 1000),]
 #' data2 = Amount[sample(1:nrow(Amount), 1000),]
-#' abcxyzData1 = computeABCXYZAnalysis(data1, value = "value", item = "item", timestamp = "date")
-#' abcxyzData2 = computeABCXYZAnalysis(data2, value = "value", item = "item", timestamp = "date")
+#' abcxyzData1 = computeABCXYZAnalysis(data1, value = "value", item = "item", timestamp = "date",
+#'                                     temporalAggregation = "day", XY = 0.5, YZ = 1)
+#' abcxyzData2 = computeABCXYZAnalysis(data2, value = "value", item = "item", timestamp = "date",
+#'                                     temporalAggregation = "day", XY = 0.5, YZ = 1)
 #' comparison = compare(abcxyzData1, abcxyzData2)
 #' comparison
 #' @export
@@ -93,6 +95,7 @@ setClass(
   aggregatedData$cumulative.percentage = cumsum(aggregatedData$percentage)
 
   # Assignment of the classes A, B or C to the items.
+  aggregatedData$abc = NA
   aggregatedData$abc[aggregatedData$cumulative.percentage <= AB] = "A"
   aggregatedData$abc[aggregatedData$cumulative.percentage > AB &
                        aggregatedData$cumulative.percentage <= BC] = "B"
@@ -143,44 +146,21 @@ setClass(
 
     xyzData = as.data.table(aggregatedData)[,list(xyz.coefficient = .sd.g(get(..value))), keyby = eval(get("item"))]
   } else {
-    # Time periods (days, weeks, months, quarters, years) with no values are considered.
-    # First the number of all time periods e. g. days between the min and max date are computed.
-    #if (temporalAggregation == "day") {
-    #  numberTimePeriods = difftime(max(data[[timestamp]], na.rm=TRUE),
-    #                               min(data[[timestamp]], na.rm=TRUE), units="days")
-    #} else if (temporalAggregation == "week") {
-    #  numberTimePeriods = difftime(max(data[[timestamp]], na.rm=TRUE),
-    #                                                   min(data[[timestamp]], na.rm=TRUE), units="weeks")
-    #} else if (temporalAggregation == "month") {
-    #  numberTimePeriods = 12*(year(max(data[[timestamp]], na.rm=TRUE))-year(min(data[[timestamp]], na.rm=TRUE)))+
-    #    (month(max(data[[timestamp]], na.rm=TRUE))-month(min(data[[timestamp]], na.rm=TRUE)))+1
-    #} else if (temporalAggregation == "quarter") {
-    #  numberTimePeriods = difftime(max(data[[timestamp]], na.rm=TRUE),
-    #                               min(data[[timestamp]], na.rm=TRUE), units="weeks") / 52.25 * 4
-    #} else if (temporalAggregation == "year") {
-    #  numberTimePeriods = floor(as.numeric(difftime(max(data[[timestamp]], na.rm = TRUE),
-    #                                min(data[[timestamp]], na.rm = TRUE), units = "days") / 365.25))
-    #}
-
-    # Second the number of all time periods is ceiled, because the value is not allowed to be
-    # smaller than the amount of rows in aggregatedData.
-    #numberTimePeriods = as.numeric(ceiling(numberTimePeriods))
-
-    daily<-data.frame(date = seq(as.Date(min(data[[timestamp]])), as.Date(max(data[[timestamp]])), by="days"))
+    daily = data.frame(date = seq(as.Date(min(data[[timestamp]])), as.Date(max(data[[timestamp]])), by="days"))
 
     if (temporalAggregation == "day") {
       numberTimePeriods = length(unique(daily$date))
     } else if (temporalAggregation == "week") {
-      weeks <- unique(ISOweek(daily$date))
+      weeks = unique(paste(isoyear(daily[["date"]]), sprintf("%02d", isoweek(daily[["date"]])), sep = "-W"))
       numberTimePeriods = length(weeks)
     } else if (temporalAggregation == "month") {
-      months <- unique(paste(year(daily[["date"]]), sprintf("%02d", month(daily[["date"]])), sep = "-"))
+      months = unique(paste(year(daily[["date"]]), sprintf("%02d", month(daily[["date"]])), sep = "-"))
       numberTimePeriods = length(months)
     } else if (temporalAggregation == "quarter") {
-      quaters <- unique(paste(year(daily[["date"]]), quarter(daily[["date"]]), sep = "-Q"))
+      quaters = unique(paste(year(daily[["date"]]), quarter(daily[["date"]]), sep = "-Q"))
       numberTimePeriods = length(quaters)
     } else if (temporalAggregation == "year") {
-      years <- unique(year(daily[["date"]]))
+      years = unique(year(daily[["date"]]))
       numberTimePeriods = length(years)
     }
 
@@ -189,7 +169,7 @@ setClass(
   }
 
   # Assignment of the classes X, Y, Z.
-  xyzData$xyz = ""
+  xyzData$xyz = NA
   xyzData$xyz[xyzData$xyz.coefficient <= XY] = "X"
   xyzData$xyz[xyzData$xyz.coefficient > XY & xyzData$xyz.coefficient <= YZ] = "Y"
   xyzData$xyz[xyzData$xyz.coefficient > YZ] = "Z"
@@ -204,7 +184,7 @@ setClass(
 #' Divides a given data frame into 3 classes, A, B, C, according to the value of one column (e.g., revenue).
 #'
 #' @param data                 Data frame or matrix on which the ABC analysis is performed.
-#' @param value                Name of the column variable that contains the value for the ABC and XYZ analysis.
+#' @param value                Name of the column variable that contains the value for the ABCXYZ analysis.
 #' @param item                 Names of the columns including the item names or identifiers (e.g., product name, EAN).
 #' @param timestamp            Name of the column including the timestamp. This column should be in POSIX or date-format.
 #' @param temporalAggregation  Temporal aggregation for the XYZ-analysis (i.e., "day", "week", "month", "quarter", "year").
@@ -213,7 +193,7 @@ setClass(
 #' @param XY                   Threshold (in percent) between category X and Y.
 #' @param YZ                   Threshold (in percent) between category Y and Z.
 #' @param ignoreZeros          Whether zero values should be ignored in XYZ-analysis.
-#' @return Returns an \code{ABCXYZData} object.
+#' @return Returns an \code{ABCXYZData} object. Only positive values are displayed
 #' @author Leon Binder \email{leon.binder@@th-deg.de}
 #' @author Bernhard Bauer \email{bernhard.bauer@@th-deg.de}
 #' @author Michael Scholz \email{michael.scholz@@th-deg.de}
@@ -270,7 +250,7 @@ computeABCXYZAnalysis = function(data,
   }
   # Aggregation for ABC-Analysis.
   dataForABC = aggregateData(data, value, item, timestamp, temporalAggregation = "total")
-
+  dataForABC = dataForABC[which(dataForABC[,value] > 0),]
   # ABC-Analysis.
   abcData = .computeABCAnalysis(dataForABC, value, AB, BC)
   colnames(abcData)[which(colnames(abcData) == "sum")] = paste(value, "sum", sep = "")
@@ -433,8 +413,10 @@ setMethod("summary", "ABCXYZData", function(object, withMissing = FALSE) {
 #' data("Amount")
 #' data1 = Amount[sample(1:nrow(Amount), 1000),]
 #' data2 = Amount[sample(1:nrow(Amount), 1000),]
-#' abcxyzData1 = computeABCXYZAnalysis(data1, value = "value", item = "item", timestamp = "date")
-#' abcxyzData2 = computeABCXYZAnalysis(data2, value = "value", item = "item", timestamp = "date")
+#' abcxyzData1 = computeABCXYZAnalysis(data1, value = "value", item = "item", timestamp = "date",
+#'                                     temporalAggregation = "day", XY = 0.5, YZ = 1)
+#' abcxyzData2 = computeABCXYZAnalysis(data2, value = "value", item = "item", timestamp = "date",
+#'                                     temporalAggregation = "day", XY = 0.5, YZ = 1)
 #' comparison = compare(abcxyzData1, abcxyzData2)
 #' @export
 setGeneric("compare", function(object1, object2, ...)
@@ -472,8 +454,10 @@ setGeneric("compare", function(object1, object2, ...)
 #' data("Amount")
 #' data1 = Amount[sample(1:nrow(Amount), 1000),]
 #' data2 = Amount[sample(1:nrow(Amount), 1000),]
-#' abcxyzData1 = computeABCXYZAnalysis(data1, value = "value", item = "item", timestamp = "date")
-#' abcxyzData2 = computeABCXYZAnalysis(data2, value = "value", item = "item", timestamp = "date")
+#' abcxyzData1 = computeABCXYZAnalysis(data1, value = "value", item = "item", timestamp = "date", 
+#'                                     temporalAggregation = "day", XY = 0.5, YZ = 1)
+#' abcxyzData2 = computeABCXYZAnalysis(data2, value = "value", item = "item", timestamp = "date", 
+#'                                     temporalAggregation = "day", XY = 0.5, YZ = 1)
 #' comparison = compare(abcxyzData1, abcxyzData2)
 #' @export
 setMethod("compare", signature = c("ABCXYZData", "ABCXYZData"), function(object1,
@@ -488,7 +472,7 @@ setMethod("compare", signature = c("ABCXYZData", "ABCXYZData"), function(object1
   if (object1@type != object2@type) {
     stop("The ABCXYZData are not comparable because they are of different types.")
   }
-
+  
   if (object1@type == "abc" && object2@type == "abc") {
     type = "abc"
   } else if (object1@type == "abcxyz" && object2@type == "abcxyz") {
@@ -511,11 +495,16 @@ setMethod("compare", signature = c("ABCXYZData", "ABCXYZData"), function(object1
     comparison$xyz.coefficient.diff = abs(comparison$xyz.coefficient.1 - comparison$xyz.coefficient.2)
     comparison = comparison[which(comparison$xyz.coefficient.diff > xyzCoefficientDiff),]
   }
-
+  
   # How big were the class changes? Positiv for changes to upper classes, Negativ for changes to lower classes.
-  comparison$abc.comparison = sapply(comparison$abc.1, "utf8ToInt") - sapply(comparison$abc.2, "utf8ToInt")
-  if (object1@type == "abcxyz" && object2@type == "abcxyz") {
-    comparison$xyz.comparison = sapply(comparison$xyz.1, "utf8ToInt") - sapply(comparison$xyz.2, "utf8ToInt")
+  if (nrow(comparison) > 0) {
+    comparison$abc.comparison = sapply(comparison$abc.1, "utf8ToInt") - sapply(comparison$abc.2, "utf8ToInt")
+    if (object1@type == "abcxyz" && object2@type == "abcxyz") {
+      comparison$xyz.comparison = sapply(comparison$xyz.1, "utf8ToInt") - sapply(comparison$xyz.2, "utf8ToInt")
+    }
+  } else {
+    comparison$abc.comparison = integer(0)
+    comparison$xyz.comparison = integer(0)
   }
 
   # Only where ABC is equal or not equal to ABC.
@@ -566,8 +555,10 @@ setMethod("compare", signature = c("ABCXYZData", "ABCXYZData"), function(object1
 #' data("Amount")
 #' data1 = Amount[sample(1:nrow(Amount), 1000),]
 #' data2 = Amount[sample(1:nrow(Amount), 1000),]
-#' abcxyzData1 = computeABCXYZAnalysis(data1, value = "value", item = "item", timestamp = "date")
-#' abcxyzData2 = computeABCXYZAnalysis(data2, value = "value", item = "item", timestamp = "date")
+#' abcxyzData1 = computeABCXYZAnalysis(data1, value = "value", item = "item", timestamp = "date",
+#'                                     temporalAggregation = "day", XY = 0.5, YZ = 1)
+#' abcxyzData2 = computeABCXYZAnalysis(data2, value = "value", item = "item", timestamp = "date",
+#'                                     temporalAggregation = "day", XY = 0.5, YZ = 1)
 #' comparison = compare(abcxyzData1, abcxyzData2)
 #' comparison
 setMethod("show", "ABCXYZComparison", function(object) {
@@ -593,8 +584,10 @@ setMethod("show", "ABCXYZComparison", function(object) {
 #' data("Amount")
 #' data1 = Amount[sample(1:nrow(Amount), 1000),]
 #' data2 = Amount[sample(1:nrow(Amount), 1000),]
-#' abcxyzData1 = computeABCXYZAnalysis(data1, value = "value", item = "item", timestamp = "date")
-#' abcxyzData2 = computeABCXYZAnalysis(data2, value = "value", item = "item", timestamp = "date")
+#' abcxyzData1 = computeABCXYZAnalysis(data1, value = "value", item = "item", timestamp = "date",
+#'                                     temporalAggregation = "day", XY = 0.5, YZ = 1)
+#' abcxyzData2 = computeABCXYZAnalysis(data2, value = "value", item = "item", timestamp = "date",
+#'                                     temporalAggregation = "day", XY = 0.5, YZ = 1)
 #' comparison = compare(abcxyzData1, abcxyzData2)
 #' summary(comparison)
 #' @export

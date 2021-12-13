@@ -22,8 +22,10 @@ Summarizes the differences between two \code{ABCXYZData} objects.
 data("Amount")
 data1 = Amount[sample(1:nrow(Amount), 1000),]
 data2 = Amount[sample(1:nrow(Amount), 1000),]
-abcxyzData1 = computeABCXYZAnalysis(data1, value = "value", item = "item", timestamp = "date")
-abcxyzData2 = computeABCXYZAnalysis(data2, value = "value", item = "item", timestamp = "date")
+abcxyzData1 = computeABCXYZAnalysis(data1, value = "value", item = "item", timestamp = "date",
+                                    temporalAggregation = "day", XY = 0.5, YZ = 1)
+abcxyzData2 = computeABCXYZAnalysis(data2, value = "value", item = "item", timestamp = "date",
+                                    temporalAggregation = "day", XY = 0.5, YZ = 1)
 comparison = compare(abcxyzData1, abcxyzData2)
 summary(comparison)
 }

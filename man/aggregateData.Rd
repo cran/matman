@@ -17,7 +17,7 @@ aggregateData(
 \arguments{
 \item{data}{Data frame or matrix on which the ABC analysis is performed.}
 
-\item{value}{Name of the column variable that contains the value for the ABC and XYZ analysis.}
+\item{value}{Name(s) of the column variable(s) that contains the values for the ABC and XYZ analysis.}
 
 \item{item}{Names of the columns including the item names or identifiers (e.g., product name, EAN).}
 

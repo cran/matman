@@ -11,7 +11,8 @@ computeConstants(
   timestamp,
   timestampFormat = c("day", "week", "month", "quater", "year"),
   currentTime,
-  thresholdTime = 7
+  thresholdTime = 7,
+  use_latest = FALSE
 )
 }
 \arguments{
@@ -29,6 +30,8 @@ stock data by items.}
 \item{currentTime}{Qualifying date for the value variable. Date must exist in data and have the same format as timestamp-variable.}
 
 \item{thresholdTime}{Time for which the value shouldn't exceed the threshold value. Number declares the time in the format of timestampFormat.}
+
+\item{use_latest}{boolean value. If TRUE data will expand and dates with noexisting values will be filled up with the latest known values.}
 }
 \value{
 Returns a data frame listing all constant items, the date since when the stock is constant and the value of the stock since this time.
@@ -44,7 +47,8 @@ constants = computeConstants(data=Stocks,
                              timestamp = "date",
                              timestampFormat = "day",
                              currentTime = "2019-07-27",
-                             thresholdTime = 7)
+                             thresholdTime = 7,
+                             use_latest = FALSE)
 }
 \seealso{
 \code{\link{computeUnderperformer}} \code{\link{computeOverperformer}}
